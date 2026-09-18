@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Milk Quality Monitor — Collection Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:      #EEF1F0;
+    --surface:    #FFFFFF;
+    --ink:        #101B19;
+    --ink-soft:   #5A6B68;
+    --ink-faint:  #93A3A0;
+    --steel:      #2C5E6E;
+    --line:       #D8DEDC;
+    --line-soft:  #E8ECEB;
+
+    --safe:       #1C7A55;
+    --safe-bg:    #E4F2EC;
+    --caution:    #A96A12;
+    --caution-bg: #FBF0DC;
+    --danger:     #B3382C;
+    --danger-bg:  #FAE6E3;
+
+    --radius: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #0E1513;
+      --surface:   #16201E;
+      --ink:       #E8EDEB;
+      --ink-soft:  #9CADAA;
+      --ink-faint: #6B7C79;
+      --steel:     #7FC4D6;
+      --line:      #273331;
+      --line-soft: #1E2A28;
+      --safe-bg:    #10291F;
+      --caution-bg: #2A2011;
+      --danger-bg:  #2C1714;
+      --safe:    #4FC08D;
+      --caution: #D9A24E;
+      --danger:  #E3705F;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Archivo', system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: flex-end; justify-content: space-between;
+    padding-bottom: 18px; border-bottom: 2px solid var(--ink);
+  }
+  .brand h1 {
+    margin: 0;
+    font-size: 26px; font-weight: 600;
+    font-stretch: 112%;
+    letter-spacing: -0.015em;
+  }
+  .brand p { margin: 3px 0 0; color: var(--ink-soft); font-size: 14px; }
+  .masthead-actions { display: flex; gap: 8px; align-items: center; }
+
+  button {
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    border-radius: 7px; cursor: pointer; transition: background .12s, border-color .12s;
+  }
+  button:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+  .btn {
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); padding: 9px 14px;
+  }
+  .btn:hover { border-color: var(--ink-faint); }
+  .btn-primary {
+    background: var(--steel); color: #fff; border: 1px solid var(--steel);
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+
+  /* ---------- fleet summary ---------- */
+  .summary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; margin: 22px 0 26px;
+  }
+  .summary div { background: var(--surface); padding: 15px 18px; }
+  .summary .n {
+    font-size: 30px; font-weight: 600; font-stretch: 118%;
+    line-height: 1; letter-spacing: -0.02em;
+  }
+  .summary .k { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+  .n.safe { color: var(--safe); }
+  .n.caution { color: var(--caution); }
+  .n.danger { color: var(--danger); }
+
+  /* ---------- layout ---------- */
+  .board { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .board { grid-template-columns: 1fr; } .summary { grid-template-columns: repeat(2, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-bottom: 1px solid var(--line-soft);
+  }
+  .card-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .card-head span { font-size: 13px; color: var(--ink-faint); }
+
+  /* ---------- fleet table ---------- */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 12.5px; font-weight: 500; color: var(--ink-faint);
+    padding: 10px 18px; border-bottom: 1px solid var(--line-soft);
+  }
+  tbody tr { cursor: pointer; border-bottom: 1px solid var(--line-soft); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--line-soft); }
+  tbody tr.selected { background: var(--line-soft); box-shadow: inset 3px 0 0 var(--steel); }
+  tbody td { padding: 13px 18px; font-size: 14.5px; }
+  .can-name { font-weight: 600; }
+  .can-route { font-size: 12.5px; color: var(--ink-faint); font-weight: 400; }
+  .reading { font-weight: 600; font-stretch: 110%; }
+
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  }
+  .pill.safe    { background: var(--safe-bg);    color: var(--safe); }
+  .pill.caution { background: var(--caution-bg); color: var(--caution); }
+  .pill.danger  { background: var(--danger-bg);  color: var(--danger); }
+
+  .live-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--safe); margin-right: 6px; vertical-align: 1px;
+  }
+  .live-dot.stale { background: var(--ink-faint); }
+
+  /* ---------- detail ---------- */
+  .detail-head { padding: 18px; border-bottom: 1px solid var(--line-soft); }
+  .detail-head h2 { margin: 0 0 2px; font-size: 20px; font-weight: 600; font-stretch: 112%; }
+  .detail-head p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  .verdict { padding: 18px; border-bottom: 1px solid var(--line-soft); }
+  .verdict-label { font-size: 15px; font-weight: 600; }
+  .verdict p { margin: 6px 0 0; font-size: 13.5px; color: var(--ink-soft); max-width: 46ch; }
+
+  .readings { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line-soft); }
+  .readings > div { background: var(--surface); padding: 18px; }
+  .big {
+    font-size: 44px; font-weight: 600; font-stretch: 122%;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .big small { font-size: 18px; font-weight: 500; font-stretch: 100%; color: var(--ink-faint); margin-left: 3px; }
+  .readings .k { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+
+  .chart-wrap { padding: 16px 18px 18px; border-top: 1px solid var(--line-soft); }
+  .chart-wrap .k { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  svg.chart { width: 100%; height: 130px; display: block; }
+
+  .log { padding: 4px 18px 16px; border-top: 1px solid var(--line-soft); }
+  .log h3 { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin: 14px 0 8px; }
+  .log-row { display: flex; gap: 12px; font-size: 13.5px; padding: 5px 0; color: var(--ink-soft); }
+  .log-row time { color: var(--ink-faint); min-width: 62px; }
+  .empty { padding: 40px 18px; text-align: center; color: var(--ink-faint); font-size: 14px; }
+
+  /* ---------- toast ---------- */
+  .toasts { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; z-index: 50; }
+  .toast {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 4px solid var(--danger);
+    border-radius: 8px; padding: 12px 16px; max-width: 320px;
+    box-shadow: 0 8px 24px rgba(16,27,25,0.14);
+  }
+  .toast strong { display: block; font-size: 14px; }
+  .toast span { font-size: 13px; color: var(--ink-soft); }
+  @media (prefers-reduced-motion: no-preference) {
+    .toast { animation: slide .22s ease-out; }
+    @keyframes slide { from { transform: translateX(16px); opacity: 0; } }
+  }
+
+  /* ---------- modal ---------- */
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(16,27,25,0.5);
+    display: none; align-items: center; justify-content: center; padding: 20px; z-index: 60;
+  }
+  .backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 14px; width: 100%; max-width: 380px;
+    padding: 22px; border: 1px solid var(--line);
+  }
+  .modal h2 { margin: 0 0 4px; font-size: 19px; font-weight: 600; font-stretch: 110%; }
+  .modal p.sub { margin: 0 0 18px; font-size: 13.5px; color: var(--ink-soft); }
+  .viewfinder {
+    position: relative; aspect-ratio: 1; border-radius: 10px;
+    background: var(--paper); border: 1px solid var(--line);
+    overflow: hidden; margin-bottom: 16px;
+  }
+  .corner { position: absolute; width: 34px; height: 34px; border: 3px solid var(--steel); }
+  .corner.tl { top: 26px; left: 26px; border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; }
+  .corner.tr { top: 26px; right: 26px; border-left: 0; border-bottom: 0; border-radius: 0 6px 0 0; }
+  .corner.bl { bottom: 26px; left: 26px; border-right: 0; border-top: 0; border-radius: 0 0 0 6px; }
+  .corner.br { bottom: 26px; right: 26px; border-left: 0; border-top: 0; border-radius: 0 0 6px 0; }
+  .scanline { position: absolute; left: 26px; right: 26px; height: 2px; background: var(--steel); opacity: .75; top: 26px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .scanline { animation: scan 2.4s ease-in-out infinite; }
+    @keyframes scan { 0%,100% { top: 30px; } 50% { top: calc(100% - 32px); } }
+  }
+  .viewfinder .hint {
+    position: absolute; left: 0; right: 0; bottom: 8px; text-align: center;
+    font-size: 12.5px; color: var(--ink-faint);
+  }
+  .field { display: block; margin-bottom: 14px; }
+  .field span { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 12px; font-family: inherit; font-size: 14.5px;
+    border: 1px solid var(--line); border-radius: 7px;
+    background: var(--paper); color: var(--ink);
+  }
+  .field input:focus-visible { outline: 2px solid var(--steel); outline-offset: 1px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="masthead">
+    <div class="brand">
+      <h1>Milk Producers' Co-operative</h1>
+      <p>Collection centre 04 · Kolasib route · <span id="clock">—</span></p>
+    </div>
+    <div class="masthead-actions">
+      <button class="btn" id="alertBtn">Turn on alerts</button>
+      <button class="btn btn-primary" id="addBtn">Add a can</button>
+    </div>
+  </header>
+
+  <section class="summary">
+    <div><div class="n" id="sumTotal">0</div><div class="k">Cans in transit</div></div>
+    <div><div class="n safe" id="sumSafe">0</div><div class="k">Safe</div></div>
+    <div><div class="n caution" id="sumCaution">0</div><div class="k">Needs watching</div></div>
+    <div><div class="n danger" id="sumDanger">0</div><div class="k">At risk</div></div>
+  </section>
+
+  <div class="board">
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Cans on the route</h2>
+        <span id="fleetMeta">—</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Can</th>
+            <th>Temp</th>
+            <th>pH</th>
+            <th>Condition</th>
+          </tr>
+        </thead>
+        <tbody id="fleetBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card" id="detailCard">
+      <div class="empty">Select a can to see its readings.</div>
+    </section>
+
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="backdrop" id="scanModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Add a can">
+    <h2>Add a can</h2>
+    <p class="sub">Scan the QR label printed on the can lid to link it to this collection centre.</p>
+    <div class="viewfinder">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="scanline"></div>
+      <div class="hint">Hold the label inside the frame</div>
+    </div>
+    <label class="field">
+      <span>Or type the can code printed under the QR</span>
+      <input id="canCodeInput" placeholder="CAN-05" autocomplete="off" />
+    </label>
+    <div class="modal-actions">
+      <button class="btn" id="cancelScan">Cancel</button>
+      <button class="btn btn-primary" id="confirmScan">Add can</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase (compat build). Running this file locally you can also use the
+     https://www.gstatic.com/firebasejs/10.12.2/... URLs instead. -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+
+<script>
+/* =========================================================================
+   Smart Two-Tier Milk Chilling — collection centre dashboard
+   CAN-01 is the live prototype (ESP32 -> Firebase Realtime DB, node milkCan).
+   The remaining cans are simulated so the fleet view can be demonstrated.
+   ========================================================================= */
+
+const SAFE_MIN = 4.0, SAFE_MAX = 8.0;
+const PH_FRESH_MIN = 6.4, PH_SOURING_MIN = 6.0;
+const EXPOSURE_CAUTION = 15;   // minutes above 8 degC before it is flagged
+const EXPOSURE_DANGER  = 45;
+const MAX_POINTS = 40;
+
+/* ---------- the fleet ---------- */
+const cans = {
+  "CAN-01": { id: "CAN-01", farmer: "Live prototype",   route: "Bench test",        live: true,  temp: null, ph: null, updated: null, history: [], exposure: 0, log: [] },
+  "CAN-02": { id: "CAN-02", farmer: "R. Lalthanpuii",   route: "Serkhan → Centre 04", live: false, temp: 6.1,  ph: 6.62, updated: Date.now(), history: [], exposure: 0,  log: [] },
+  "CAN-03": { id: "CAN-03", farmer: "B. Zothanmawia",   route: "Hmunpui → Centre 04", live: false, temp: 9.4,  ph: 6.44, updated: Date.now(), history: [], exposure: 22, log: [] },
+  "CAN-04": { id: "CAN-04", farmer: "K. Ramengmawii",   route: "Bilkhawthlir → 04",   live: false, temp: 12.8, ph: 6.18, updated: Date.now(), history: [], exposure: 58, log: [] }
+};
+
+let selectedId = "CAN-02";
+let alertsOn = false;
+const lastVerdict = {};
+
+/* ---------- risk model ----------
+   Time-temperature exposure: bacterial growth is driven by how long milk sits
+   above 8 degC, not by the instantaneous reading alone. pH is the corroborating
+   signal — it falls as lactic acid builds up. */
+function assess(can) {
+  const { temp, ph, exposure } = can;
+  if (temp === null) return { band: "caution", label: "No reading", why: "This can has not reported since it was added." };
+
+  if (ph !== null && ph < PH_SOURING_MIN)
+    return { band: "danger", label: "Danger", why: "pH has fallen below 6.0. Souring is already under way — divert this can for testing before it joins the bulk tank." };
+
+  if (exposure >= EXPOSURE_DANGER)
+    return { band: "danger", label: "Danger", why: `Milk has been above ${SAFE_MAX}°C for ${Math.round(exposure)} minutes. Bacterial load is likely past the acceptance limit.` };
+
+  if (temp > 15)
+    return { band: "danger", label: "Danger", why: `At ${temp.toFixed(1)}°C the can is far outside the cold chain. Check that the PCM insert is seated in the central opening.` };
+
+  if (exposure >= EXPOSURE_CAUTION || (ph !== null && ph < PH_FRESH_MIN))
+    return { band: "caution", label: "Watch", why: `Above ${SAFE_MAX}°C for ${Math.round(exposure)} minutes with pH at ${ph !== null ? ph.toFixed(2) : "--"}. Still acceptable, but it should reach the centre soon.` };
+
+  if (temp > SAFE_MAX)
+    return { band: "caution", label: "Watch", why: `Reading is ${temp.toFixed(1)}°C, just above the ${SAFE_MAX}°C limit. The PCM insert should pull it back down shortly.` };
+
+  if (temp < SAFE_MIN)
+    return { band: "caution", label: "Watch", why: `At ${temp.toFixed(1)}°C the milk is below the ${SAFE_MIN}°C floor. Unexpected for OP05 — check the probe.` };
+
+  return { band: "safe", label: "Safe", why: `Holding at ${temp.toFixed(1)}°C with pH ${ph !== null ? ph.toFixed(2) : "--"}. Within the 4–8°C window.` };
+}
+
+function freshnessNote(ph) {
+  if (ph === null) return "no pH reading";
+  if (ph >= PH_FRESH_MIN) return "fresh";
+  if (ph >= PH_SOURING_MIN) return "early souring";
+  return "souring";
+}
+
+function record(can, temp, ph) {
+  const now = Date.now();
+  if (can.history.length) {
+    const gapMin = (now - can.history[can.history.length - 1].t) / 60000;
+    if (temp > SAFE_MAX) can.exposure += gapMin;
+  }
+  can.temp = temp;
+  can.ph = ph;
+  can.updated = now;
+  can.history.push({ t: now, temp });
+  if (can.history.length > MAX_POINTS) can.history.shift();
+}
+
+/* ---------- live can ---------- */
+function startFirebase() {
+  if (typeof firebase === "undefined") return false;
+  try {
+    firebase.initializeApp({
+      apiKey: "AIzaSyC12PB0P_-OZ3V1T6ikQvdSz0wy9nKPC8M",
+      databaseURL: "https://chilling-can-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "chilling-can"
+    });
+    firebase.database().ref("milkCan").on("value", (snap) => {
+      const d = snap.val();
+      if (!d) return;
+      const can = cans["CAN-01"];
+      can.farmer = d.canId ? "Prototype " + d.canId : can.farmer;
+      record(can, Number(d.temperature) || 0, typeof d.phLevel === "number" ? d.phLevel : null);
+      render();
+    }, () => {});
+    return true;
+  } catch (e) { return false; }
+}
+
+if (!startFirebase()) {
+  // Firebase unreachable — keep CAN-01 on simulated data so the demo still runs.
+  cans["CAN-01"].live = false;
+  cans["CAN-01"].farmer = "Prototype (offline)";
+  cans["CAN-01"].temp = 5.4;
+  cans["CAN-01"].ph = 6.71;
+  cans["CAN-01"].updated = Date.now();
+}
+
+/* ---------- simulation for the other cans ---------- */
+function seedHistory() {
+  Object.values(cans).forEach(can => {
+    if (can.temp === null) return;
+    const now = Date.now();
+    for (let i = 24; i > 0; i--) {
+      const drift = (Math.random() - 0.45) * 0.8 + i * 0.05;
+      can.history.push({ t: now - i * 90000, temp: Math.max(2, can.temp + drift) });
+    }
+    can.log = [
+      { t: now - 78 * 60000, text: "Linked to centre 04 by QR scan" },
+      { t: now - 74 * 60000, text: "Loading complete, PCM insert seated" }
+    ];
+    if (can.exposure > 0) can.log.push({ t: now - 30 * 60000, text: `Crossed ${SAFE_MAX}°C` });
+  });
+}
+seedHistory();
+
+setInterval(() => {
+  Object.values(cans).forEach(can => {
+    if (can.live || can.temp === null) return;
+    const step = (Math.random() - 0.42) * 0.35;
+    record(can, Math.max(2, Math.min(24, can.temp + step)),
+           can.ph === null ? null : Math.max(5.6, Math.min(6.9, can.ph - Math.random() * 0.004)));
+  });
+  render();
+}, 4000);
+
+/* ---------- rendering ---------- */
+const el = id => document.getElementById(id);
+
+function relTime(ts) {
+  if (!ts) return "—";
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  return Math.round(s / 3600) + " h ago";
+}
+
+function renderFleet() {
+  const body = el("fleetBody");
+  body.innerHTML = "";
+  let counts = { safe: 0, caution: 0, danger: 0 };
+
+  Object.values(cans).forEach(can => {
+    const v = assess(can);
+    counts[v.band]++;
+
+    const tr = document.createElement("tr");
+    if (can.id === selectedId) tr.className = "selected";
+    tr.tabIndex = 0;
+    tr.innerHTML = `
+      <td>
+        <div class="can-name">${can.live ? '<span class="live-dot"></span>' : ""}${can.id}</div>
+        <div class="can-route">${can.route}</div>
+      </td>
+      <td class="reading">${can.temp === null ? "—" : can.temp.toFixed(1) + "°C"}</td>
+      <td class="reading">${can.ph === null ? "—" : can.ph.toFixed(2)}</td>
+      <td><span class="pill ${v.band}">${v.label}</span></td>`;
+    tr.addEventListener("click", () => { selectedId = can.id; render(); });
+    tr.addEventListener("keydown", e => { if (e.key === "Enter") { selectedId = can.id; render(); } });
+    body.appendChild(tr);
+
+    // notification on transition into danger
+    if (v.band === "danger" && lastVerdict[can.id] !== "danger") notify(can, v);
+    lastVerdict[can.id] = v.band;
+  });
+
+  el("sumTotal").textContent = Object.keys(cans).length;
+  el("sumSafe").textContent = counts.safe;
+  el("sumCaution").textContent = counts.caution;
+  el("sumDanger").textContent = counts.danger;
+  el("fleetMeta").textContent = counts.danger
+    ? counts.danger + " need attention"
+    : "All within limits";
+}
+
+function sparkline(history) {
+  if (history.length < 2) return '<div class="empty">Collecting readings…</div>';
+  const w = 400, h = 130, pad = 6;
+  const temps = history.map(p => p.temp);
+  const lo = Math.min(SAFE_MIN - 1, ...temps), hi = Math.max(SAFE_MAX + 2, ...temps);
+  const x = i => pad + (i / (history.length - 1)) * (w - pad * 2);
+  const y = t => h - pad - ((t - lo) / (hi - lo)) * (h - pad * 2);
+  const line = temps.map((t, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(t).toFixed(1)}`).join(" ");
+  const bandTop = y(SAFE_MAX), bandH = y(SAFE_MIN) - y(SAFE_MAX);
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Temperature over time">
+    <rect x="0" y="${bandTop}" width="${w}" height="${bandH}" fill="var(--safe-bg)"></rect>
+    <line x1="0" y1="${bandTop}" x2="${w}" y2="${bandTop}" stroke="var(--safe)" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"></line>
+    <path d="${line}" fill="none" stroke="var(--steel)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+    <circle cx="${x(temps.length - 1).toFixed(1)}" cy="${y(temps[temps.length - 1]).toFixed(1)}" r="3.5" fill="var(--steel)"></circle>
+  </svg>`;
+}
+
+function renderDetail() {
+  const can = cans[selectedId];
+  const card = el("detailCard");
+  if (!can) { card.innerHTML = '<div class="empty">Select a can to see its readings.</div>'; return; }
+  const v = assess(can);
+
+  const logRows = can.log.slice().reverse().map(e =>
+    `<div class="log-row"><time>${new Date(e.t).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</time><div>${e.text}</div></div>`
+  ).join("") || '<div class="log-row"><div>No events yet.</div></div>';
+
+  card.innerHTML = `
+    <div class="detail-head">
+      <h2>${can.id}</h2>
+      <p>${can.farmer} · ${can.route}</p>
+    </div>
+
+    <div class="verdict">
+      <div class="verdict-label"><span class="pill ${v.band}">${v.label}</span></div>
+      <p>${v.why}</p>
+    </div>
+
+    <div class="readings">
+      <div>
+        <div class="big">${can.temp === null ? "—" : can.temp.toFixed(1)}<small>°C</small></div>
+        <div class="k">Target ${SAFE_MIN}–${SAFE_MAX}°C</div>
+      </div>
+      <div>
+        <div class="big">${can.ph === null ? "—" : can.ph.toFixed(2)}</div>
+        <div class="k">pH · ${freshnessNote(can.ph)}</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="k">
+        <span>Temperature, last ${can.history.length} readings</span>
+        <span>${Math.round(can.exposure)} min above ${SAFE_MAX}°C</span>
+      </div>
+      ${sparkline(can.history)}
+    </div>
+
+    <div class="log">
+      <h3>Activity</h3>
+      ${logRows}
+      <div class="log-row"><time>${relTime(can.updated)}</time><div>Last reading received</div></div>
+    </div>`;
+}
+
+function render() { renderFleet(); renderDetail(); }
+
+/* ---------- notifications ---------- */
+function notify(can, v) {
+  const box = document.createElement("div");
+  box.className = "toast";
+  box.innerHTML = `<strong>${can.id} is at risk</strong><span>${v.why}</span>`;
+  el("toasts").appendChild(box);
+  setTimeout(() => box.remove(), 9000);
+
+  if (alertsOn && "Notification" in window && Notification.permission === "granted") {
+    new Notification(`${can.id} is at risk`, { body: v.why });
+  }
+}
+
+el("alertBtn").addEventListener("click", () => {
+  if (!("Notification" in window)) { alertsOn = true; el("alertBtn").textContent = "Alerts on"; return; }
+  Notification.requestPermission().then(p => {
+    alertsOn = p === "granted";
+    el("alertBtn").textContent = alertsOn ? "Alerts on" : "Alerts blocked";
+  });
+});
+
+/* ---------- add a can ---------- */
+const modal = el("scanModal");
+el("addBtn").addEventListener("click", () => {
+  modal.classList.add("open");
+  el("canCodeInput").value = "";
+  setTimeout(() => el("canCodeInput").focus(), 50);
+});
+el("cancelScan").addEventListener("click", () => modal.classList.remove("open"));
+modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("open"); });
+
+el("confirmScan").addEventListener("click", () => {
+  const raw = el("canCodeInput").value.trim().toUpperCase();
+  const id = raw || ("CAN-0" + (Object.keys(cans).length + 1));
+  if (!cans[id]) {
+    cans[id] = {
+      id, farmer: "Newly linked", route: "Awaiting first reading", live: false,
+      temp: 28.6, ph: 6.78, updated: Date.now(), exposure: 0,
+      history: [{ t: Date.now() - 60000, temp: 30.2 }, { t: Date.now(), temp: 28.6 }],
+      log: [{ t: Date.now(), text: "Linked to centre 04 by QR scan" }]
+    };
+  }
+  selectedId = id;
+  modal.classList.remove("open");
+  render();
+});
+
+/* ---------- clock ---------- */
+setInterval(() => {
+  el("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}, 1000);
+el("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+render();
+</script>
+</body>
+</html>

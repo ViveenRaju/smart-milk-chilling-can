@@ -1,0 +1,7 @@
+﻿node_modules/
+dist/
+.env
+.env.local
+.vscode/
+*.bak
+milk_monitor_esp32(final).ino

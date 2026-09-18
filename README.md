@@ -46,59 +46,32 @@ The system combines passive PCM-based cooling with short-duration Peltier-assist
 
 \## System Architecture
 
-
-
-```text
-
-&#x20;                SMART MILK CHILLING CAN
-
-&#x20;                        │
-
-&#x20;       ┌────────────────┼────────────────┐
-
-&#x20;       │                │                │
-
-&#x20;  Temperature        pH Sensor       Cooling System
-
-&#x20;    Sensor                              │
-
-&#x20;       │                         ┌──────┴──────┐
-
-&#x20;       │                         │             │
-
-&#x20;       │                      Peltier         PCM
-
-&#x20;       │                      Loading       Transport
-
-&#x20;       │                       Phase          Phase
-
-&#x20;       │
-
-&#x20;       └──────────────┬───────────────┐
-
-&#x20;                      │
-
-&#x20;                    ESP32
-
-&#x20;                      │
-
-&#x20;                      ▼
-
-&#x20;             Firebase Realtime DB
-
-&#x20;                      │
-
-&#x20;                      ▼
-
-&#x20;               Web Dashboard
-
-&#x20;                      │
-
-&#x20;            ┌─────────┼─────────┐
-
-&#x20;            │         │         │
-
-&#x20;         Temp        pH       Risk
-
-&#x20;       Monitoring Monitoring Classification
+┌─────────────────────────────────────────────────────────────┐
+│              SMART MILK CHILLING CAN                        │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+        Temperature        pH Sensor     Cooling System
+          Sensor                              │
+              │                         ┌─────┴─────┐
+              │                         │           │
+              │                      Peltier       PCM
+              │                    Initial         Passive
+              │                    Cooling        Cooling
+              │
+              └───────────────┬───────────────┘
+                              │
+                           ESP32
+                              │
+                              ▼
+                    Firebase Realtime DB
+                              │
+                              ▼
+                       Web Dashboard
+                              │
+                 ┌────────────┼────────────┐
+                 │            │            │
+              Temperature     pH        Risk Status
+               Monitoring  Monitoring  Classification
 

@@ -1,5 +1,7 @@
 # Smart Hybrid Milk-Chilling and Quality-Monitoring Can
 
+🔗 [Live Demo](https://chilling-can.web.app/)
+
 ### SIH Project Prototype
 
 A portable smart milk-chilling system designed to help maintain milk quality during collection and transportation by combining **PCM-based passive cooling**, **Peltier-assisted active cooling**, and **real-time quality monitoring**.
